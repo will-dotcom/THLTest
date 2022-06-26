@@ -26,21 +26,25 @@ AfterAll(async function () {
 Given("goto {string}", async function (searchEngine) {
     page = await context.newPage();
     await page.goto(searchEngine);
+    await Promise.all([
+        page.waitForNavigation(/*{ url: 'https://www.google.com/' }*/),
+        page.click('text=English')
+    ]);
+    
 });
 
 //2 a) Search by “Maui” should have a link to ‘maui - rentals.com’ in the returns results
 //3. a) Search by “Britz” should have a link to ‘britz.com’ in the returns results
 When("input for search{string}", async function (skeyword) {
 
-    // await page.click('[aria-label="Google Search"]');
-    await page.click('[aria-label="Search"]');
+    await page.click('[aria-label="Search"]');//EN version
 
-    // await page.fill('[aria-label="Google Search"]', skeyword);
-    await page.fill('[aria-label="Search"]', skeyword);
+    await page.fill('[aria-label="Search"]', skeyword);//EN version
+
     await Promise.all([
         page.waitForNavigation(/*{ url: 'https://www.google.com/search?q=' }*/),
-        // page.click('text=Google Search')
         page.click('text=Google Search')
+        //page.click(':nth-match(:text("Google Search"), 2)')
     ]);
 
 });
@@ -65,12 +69,16 @@ Given("in {string} select {string}", async function (weburl, desCountry) {
 
     desCountry1 = desCountry;
 
+    //await npage.click('div:has-text("Choose your destination")');
     await npage.click('text=Choose your destinationNew ZealandAustraliaChoose your destinationNew ZealandAus >> div');
     if ((desCountry.includes("Zealand")) || (desCountry.includes("zealand"))) {
-        await npage.click('text=Choose your destinationNew ZealandAustraliaChoose your destinationNew ZealandAus >> li');
+        // await npage.click('li.has-text(""=Choose your destinationNew ZealandAustraliaChoose your destinationNew ZealandAus >> li"")');
+        await npage.click('li[data-raw-value="nz"]:has-text("New Zealand")');
+
     }
     else if ((desCountry.includes("Aus")) || (desCountry.includes("aus"))) {
-        await npage.click('text=Choose your destinationNew ZealandAustraliaChoose your destinationNew ZealandAus >> :nth-match(li, 2)');
+        // await npage.click('text=Choose your destinationNew ZealandAustraliaChoose your destinationNew ZealandAus >> :nth-match(li, 2)');
+        await npage.click('li[data-raw-value="au"]:has-text("Australia")');
     }
 });
 Then("select {int} {int} {int} {int}", async function (upMonth, upDay, offMonth, offDay) {
@@ -137,17 +145,18 @@ Then("select {string} {string}", async function (pCity, offCity) {
 
 });
 
-
 Then("in {string} select {int} {int} {string}", async function (weburl, adultNum, kidNum, driverL) {
 
+    // Click button:has-text("Passengers")
     await npage.click('button:has-text("Passengers")');
-    await npage.click('text=1234561123456 >> div');
+
     // select number of adults
+    await npage.click('#form_main div:has-text("Adults 1234561123456")');
     let textAdult = '#form_main li:has-text("' + adultNum + '")';
     await npage.click(textAdult);
 
     // select number of kis
-    await npage.click('text=0123450012345 >> div');
+    await npage.click('#form_main div:has-text("Children 0123450012345")');
     let textKid = '#form_main >> :nth-match(li:has-text("' + kidNum + '"), 2)';
     await npage.click(textKid);
 
@@ -196,6 +205,10 @@ Then("in {string}do search should get {int}", async function (weburl, resultNum)
     // check result
     await npage.waitForSelector(".row.thl-sub-section-heading-brand");
 
+
+    await npage.context('Sorry, we haven\'t found any campervans for your search dates or locations. ');
+
+
     // should return results for 4 brands
     let brands = await npage.$$(".row.thl-sub-section-heading-brand");
     assert.notEqual(brands, null);
@@ -212,4 +225,3 @@ Then("in {string}do search should get {int}", async function (weburl, resultNum)
     assert.notEqual(brandResult, null)
 
 });
-
